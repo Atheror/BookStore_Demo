@@ -14,10 +14,19 @@ books = sqlalchemy.Table(
     sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column('title', sqlalchemy.String),
     sqlalchemy.Column('author', sqlalchemy.String),
+    sqlalchemy.Column('reader_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('readers.id'), nullable=False, index=True),
 )
 
-engine = sqlalchemy.create_engine(DATABASE_URL)
-metadata.create_all(engine)
+readers = sqlalchemy.Table(
+    'readers',
+    metadata,
+    sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column('first_name', sqlalchemy.String),
+    sqlalchemy.Column('last_name', sqlalchemy.String),
+)
+
+# engine = sqlalchemy.create_engine(DATABASE_URL)
+# metadata.create_all(engine)
 
 app = FastAPI()
 
@@ -38,5 +47,12 @@ async def get_all_books():
 async def create_book(request: Request):
     data = await request.json()
     query = books.insert().values(**data)
+    last_record_id = await database.execute(query)
+    return {'id': last_record_id}
+
+@app.post('/readers/')
+async def create_reader(request: Request):
+    data = await request.json()
+    query = readers.insert().values(**data)
     last_record_id = await database.execute(query)
     return {'id': last_record_id}
