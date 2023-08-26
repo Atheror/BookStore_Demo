@@ -8,6 +8,10 @@ DATABASE_URL = 'postgresql://postgres@localhost:5432/store'
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
+# on each change of tables, run the following commands:
+# alembic revision -m "Add a column"
+# alembic upgrade head
+
 books = sqlalchemy.Table(
     'books',
     metadata,
@@ -25,6 +29,7 @@ readers = sqlalchemy.Table(
     sqlalchemy.Column('last_name', sqlalchemy.String),
 )
 
+# Not needed if using alembic
 # engine = sqlalchemy.create_engine(DATABASE_URL)
 # metadata.create_all(engine)
 
