@@ -11,7 +11,7 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 # on each change of tables, run the following commands:
-# alembic revision -m "Add a column"
+# alembic revision --autogenerate -m "Many to many relationship"
 # alembic upgrade head
 
 books = sqlalchemy.Table(
@@ -20,7 +20,6 @@ books = sqlalchemy.Table(
     sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column('title', sqlalchemy.String),
     sqlalchemy.Column('author', sqlalchemy.String),
-    sqlalchemy.Column('reader_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('readers.id'), nullable=False, index=True),
 )
 
 readers = sqlalchemy.Table(
@@ -31,6 +30,14 @@ readers = sqlalchemy.Table(
     sqlalchemy.Column('last_name', sqlalchemy.String),
 )
 
+readers_books = sqlalchemy.Table(
+    'readers_books',
+    metadata,
+    sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column('book_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('books.id'), nullable=False),
+    sqlalchemy.Column('reader_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('readers.id'), nullable=False),
+)
+
 # Not needed if using alembic
 # engine = sqlalchemy.create_engine(DATABASE_URL)
 # metadata.create_all(engine)
@@ -38,11 +45,14 @@ readers = sqlalchemy.Table(
 class BookCreate(BaseModel):
     title: str
     author: str
-    reader_id: int
 
 class ReaderCreate(BaseModel):
     first_name: str
     last_name: str
+
+class ReadBookCreate(BaseModel):
+    book_id: int
+    reader_id: int
 
 app = FastAPI()
 
@@ -100,6 +110,18 @@ async def create_reader(request: ReaderCreate):
         return {'error': str(e)}
     
     query = readers.insert().values(**reader_data.dict())
+    last_record_id = await database.execute(query)
+    
+    return {'id': last_record_id}
+
+@app.post('/read/')
+async def create_read_book(request: ReadBookCreate):
+    try:
+        readbook_data = ReadBookCreate(**request.dict())
+    except ValidationError as e:
+        return {'error': str(e)}
+    
+    query = readers_books.insert().values(**readbook_data.dict())
     last_record_id = await database.execute(query)
     
     return {'id': last_record_id}
