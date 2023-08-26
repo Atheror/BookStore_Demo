@@ -5,7 +5,9 @@ from fastapi import FastAPI, Request
 
 from pydantic import BaseModel, ValidationError
 
-DATABASE_URL = 'postgresql://postgres@localhost:5432/store'
+from decouple import config
+
+DATABASE_URL = f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_DATABASE')}"
 
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
